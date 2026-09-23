@@ -62,10 +62,6 @@ PRODUCT_PACKAGES += \
     android.hardware.nfc@1.0-impl \
     com.android.nfc_extras \
     nfc.msm8974 \
-    libnfc \
-    libnfc_ndef \
-    libnfc_jni \
-    Nfc \
     Tag
 
 ifeq ($(TARGET_BUILD_VARIANT),user)
