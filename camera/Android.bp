@@ -21,6 +21,9 @@ cc_library_shared {
         include_dirs: [
             "frameworks/av/camera/aidl",
             "frameworks/native/aidl/gui",
+            "frameworks/native/libs/permission/aidl",
+            "hardware/interfaces/common/fmq/aidl",
+            "hardware/interfaces/common/aidl",
         ],
     },
 
@@ -30,50 +33,62 @@ cc_library_shared {
 
         // Source for camera interface parcelables, and manually-written interfaces
         "Camera.cpp",
+        "CameraBase.cpp",
         "CameraMetadata.cpp",
         "CameraParameters.cpp",
-        "CameraParameters_EXT.cpp",
         "CameraParameters2.cpp",
-        "CaptureResult.cpp",
+        "CameraParameters_EXT.cpp",
         "CameraSessionStats.cpp",
+        "CameraUtils.cpp",
+        "CaptureResult.cpp",
         "ICamera.cpp",
         "ICameraClient.cpp",
         "ICameraRecordingProxy.cpp",
+        "VendorTagDescriptor.cpp",
         "camera2/CaptureRequest.cpp",
         "camera2/ConcurrentCamera.cpp",
         "camera2/OutputConfiguration.cpp",
         "camera2/SessionConfiguration.cpp",
         "camera2/SubmitInfo.cpp",
-        "ICameraRecordingProxyListener.cpp",
-        "CameraBase.cpp",
-        "CameraUtils.cpp",
-        "VendorTagDescriptor.cpp",
     ],
 
     shared_libs: [
+        "android.hardware.common.fmq-V1-cpp",
+        "android.hardware.common-V2-cpp",
+        "camera_platform_flags_c_lib",
+        "framework-permission-aidl-cpp",
+        "lib-platform-compat-native-api",
         "libbase",
-        "libcutils",
-        "libutils",
-        "liblog",
         "libbinder",
-        "libgui",
         "libcamera_metadata",
+        "libcutils",
+        "libgui",
+        "liblog",
         "libnativewindow",
+        "libpermission",
+        "libutils",
     ],
 
     include_dirs: [
-        "system/media/private/camera/include",
         "frameworks/native/include/media/openmax",
+        "system/media/private/camera/include",
     ],
     export_include_dirs: [
         "include",
-        "include/camera"
+        "include/camera",
+    ],
+    export_shared_lib_headers: [
+        "framework-permission-aidl-cpp",
+        "android.hardware.common.fmq-V1-cpp",
+        "android.hardware.common-V2-cpp",
+        "libcamera_metadata",
+        "libgui",
+        "libnativewindow",
     ],
 
     cflags: [
-        "-Werror",
         "-Wall",
+        "-Werror",
         "-Wextra",
     ],
-
 }
