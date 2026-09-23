@@ -37,6 +37,7 @@ TARGET_BOARD_INFO_FILE ?= device/htc/m8-common/board-info.txt
 TARGET_PROCESS_SDK_VERSION_OVERRIDE += \
     /system/bin/mediaserver=22 \
     /system/vendor/bin/mm-qcamera-daemon=23
+$(call soong_config_set,bionic_linker,process_sdk_version_overrides,$(strip $(TARGET_PROCESS_SDK_VERSION_OVERRIDE)))
 USE_DEVICE_SPECIFIC_CAMERA := true
 
 # NFC
