@@ -56,6 +56,9 @@ PRODUCT_COPY_FILES += \
 PRODUCT_PACKAGES += \
     PhhIms
 
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configs/privapp-permissions-me.phh.ims.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/permissions/privapp-permissions-me.phh.ims.xml
+
 # IRDA
 PRODUCT_PACKAGES += \
     android.hardware.ir@1.0-impl \

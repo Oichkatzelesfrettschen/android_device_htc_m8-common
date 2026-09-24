@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Privileged permissions PhhIms requests. With
+     ro.control_privapp_permissions=enforce, PackageManager aborts
+     system_server at systemReady when a priv-app requests a
+     signature|privileged permission missing from this list. -->
+<permissions>
+    <privapp-permissions package="me.phh.ims">
+        <permission name="android.permission.READ_PRIVILEGED_PHONE_STATE"/>
+        <permission name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    </privapp-permissions>
+</permissions>
