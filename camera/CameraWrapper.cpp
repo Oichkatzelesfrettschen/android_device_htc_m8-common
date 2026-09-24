@@ -26,6 +26,8 @@
 #define LOG_TAG "CameraWrapper"
 #include <cutils/log.h>
 
+#include <string.h>
+
 #include <utils/threads.h>
 #include <utils/String8.h>
 #include <hardware/hardware.h>
@@ -119,10 +121,6 @@ static char *camera_fixup_getparams(const char *settings)
         rotation = atoi(params.get(android::CameraParameters::KEY_ROTATION));
     }
 
-    /* Disable face detection */
-    params.set(android::CameraParameters::KEY_MAX_NUM_DETECTED_FACES_HW, "off");
-    params.set(android::CameraParameters::KEY_MAX_NUM_DETECTED_FACES_SW, "off");
-
     params.set("preview-frame-rate-mode", "frame-rate-fixed");
 
     /* Fix rotation missmatch */
@@ -167,10 +165,6 @@ static char *camera_fixup_setparams(int id, const char *settings)
         isVideo = !strcmp(params.get(android::CameraParameters::KEY_RECORDING_HINT), "true");
     }
 
-    /* Disable face detection */
-    params.set(android::CameraParameters::KEY_MAX_NUM_DETECTED_FACES_HW, "off");
-    params.set(android::CameraParameters::KEY_MAX_NUM_DETECTED_FACES_SW, "off");
-
     /* Enable fixed fps mode */
     params.set("preview-frame-rate-mode", "frame-rate-fixed");
 
@@ -213,9 +207,75 @@ void camera_notify_cb(int32_t msg_type, int32_t ext1, int32_t ext2, void *user _
     gUserNotifyCb(msg_type, ext1, ext2, gUserCameraDevice);
 }
 
+/*
+ * camera.vendor.msm8974.so and libcameraface.so pass frame metadata in HTC's
+ * camera.h layout: a 16-byte header with the face array pointer at offset 8,
+ * and 0x1b0-byte face records whose first 48 bytes hold the AOSP fields in
+ * AOSP order (rect, score, id, left_eye, right_eye, mouth). The framework
+ * reads this tree's camera_face_t, so every metadata pointer is rebuilt with
+ * the AOSP fields copied and the vendor extension fields zeroed.
+ */
+struct htc_camera_frame_metadata {
+    int32_t number_of_faces;
+    int32_t reserved0;
+    const uint8_t *faces;
+    void *reserved1;
+};
+
+struct htc_camera_face_head {
+    int32_t rect[4];
+    int32_t score;
+    int32_t id;
+    int32_t left_eye[2];
+    int32_t right_eye[2];
+    int32_t mouth[2];
+};
+
+static const size_t kHtcCameraFaceSize = 0x1b0;
+
+/* The HAL advertises max-num-detected-faces-hw=10, and libcameraface sizes
+ * its face arrays for ten records. */
+static const int kMaxFaces = 10;
+
 void camera_data_cb(int32_t msg_type, const camera_memory_t *data, unsigned int index,
         camera_frame_metadata_t *metadata, void *user __unused) {
-    gUserDataCb(msg_type, data, index, metadata, gUserCameraDevice);
+    if (metadata == NULL) {
+        gUserDataCb(msg_type, data, index, NULL, gUserCameraDevice);
+        return;
+    }
+
+    const htc_camera_frame_metadata *htc =
+            reinterpret_cast<const htc_camera_frame_metadata *>(metadata);
+    camera_face_t faces[kMaxFaces];
+    int count = htc->faces != NULL ? htc->number_of_faces : 0;
+    if (count < 0) {
+        count = 0;
+    } else if (count > kMaxFaces) {
+        ALOGW("%s: %d faces from the HAL, forwarding %d", __FUNCTION__, count, kMaxFaces);
+        count = kMaxFaces;
+    }
+    memset(faces, 0, sizeof(faces));
+    for (int i = 0; i < count; i++) {
+        htc_camera_face_head head;
+        memcpy(&head, htc->faces + i * kHtcCameraFaceSize, sizeof(head));
+        camera_face_t &face = faces[i];
+        for (int k = 0; k < 4; k++) {
+            face.rect[k] = head.rect[k];
+        }
+        face.score = head.score;
+        face.id = head.id;
+        for (int k = 0; k < 2; k++) {
+            face.left_eye[k] = head.left_eye[k];
+            face.right_eye[k] = head.right_eye[k];
+            face.mouth[k] = head.mouth[k];
+        }
+    }
+
+    /* The framework copies the faces before this returns. */
+    camera_frame_metadata_t aosp;
+    aosp.number_of_faces = count;
+    aosp.faces = faces;
+    gUserDataCb(msg_type, data, index, &aosp, gUserCameraDevice);
 }
 
 void camera_data_cb_timestamp(nsecs_t timestamp, int32_t msg_type,
