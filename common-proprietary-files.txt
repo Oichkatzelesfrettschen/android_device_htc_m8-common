@@ -93,7 +93,7 @@ vendor/lib/libmmcamera2_stats_algorithm.so
 vendor/lib/libmmcamera2_stats_modules.so
 vendor/lib/libmmcamera2_vpe_module.so
 vendor/lib/libmmcamera2_wnr_module.so
-vendor/lib/libmmcamera_faceproc.so
+vendor/lib/libmmcamera_faceproc.so|8a3c342c3b1ab82f735ff2331fc484d49a2b3941|8a53fae7f423f5da0ec1847eb9742360d2ac5cab
 vendor/lib/libmmcamera_hdr_gb_lib.so
 vendor/lib/libmmcamera_hdr_lib.so
 vendor/lib/libmmcamera_imglib.so
@@ -101,7 +101,7 @@ vendor/lib/libmmcamera_tintless_algo.so
 vendor/lib/libmmcamera_tintless_bg_pca_algo.so
 vendor/lib/libmmcamera_wavelet_lib.so
 vendor/lib/libmmipl.so
-vendor/lib/libmmjpeg.so
+vendor/lib/libmmjpeg.so|f5f097c02091849b2fd701392b8d5576843ed9c8|cb803741901c35af5370bcb072274acf1fc31794
 vendor/lib/libmmqjpeg_codec.so
 vendor/lib/liboemcamera.so
 vendor/lib/libqomx_jpegdec.so

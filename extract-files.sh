@@ -14,10 +14,15 @@ fi
 
 set -e
 
+PYTHON=${PYTHON:-python3}
+
 function blob_fixup() {
     case "${1}" in
     vendor/lib/hw/camera.vendor.msm8974.so)
         "${PATCHELF}" --replace-needed "libcamera_client.so" "libcamera_client_htc.so" "${2}"
+        ;;
+    vendor/lib/libmmcamera_faceproc.so|vendor/lib/libmmjpeg.so)
+        "${PYTHON}" "$(dirname "${BASH_SOURCE[0]}")/untextrel_camera.py" "${2}"
         ;;
     esac
 }
