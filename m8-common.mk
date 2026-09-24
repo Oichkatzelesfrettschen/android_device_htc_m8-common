@@ -47,6 +47,15 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     init.target.rc
 
+# IMS: PhhIms is a userspace SIP/IMS MmTel service, because the legacy
+# Qualcomm RIL carries no IMS. It needs SIM AKA over SIM_AUTHENTICATION and an
+# ims APN data call from the RIL, and IPsec transport mode from the kernel.
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.hardware.telephony.ims.xml:system/vendor/etc/permissions/android.hardware.telephony.ims.xml
+
+PRODUCT_PACKAGES += \
+    PhhIms
+
 # IRDA
 PRODUCT_PACKAGES += \
     android.hardware.ir@1.0-impl \
