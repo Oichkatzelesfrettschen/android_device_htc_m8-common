@@ -36,7 +36,10 @@ DEVICE_PACKAGE_OVERLAYS += \
 # Permissions
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.consumerir.xml:system/vendor/etc/permissions/android.hardware.consumerir.xml \
+    frameworks/native/data/etc/android.hardware.nfc.xml:system/vendor/etc/permissions/android.hardware.nfc.xml \
     frameworks/native/data/etc/android.hardware.telephony.cdma.xml:system/vendor/etc/permissions/android.hardware.telephony.cdma.xml \
+    frameworks/native/data/etc/com.android.nfc_extras.xml:system/vendor/etc/permissions/com.android.nfc_extras.xml \
+    frameworks/native/data/etc/com.nxp.mifare.xml:system/vendor/etc/permissions/com.nxp.mifare.xml \
     $(LOCAL_PATH)/configs/com.htc.software.market.xml:system/vendor/etc/permissions/com.htc.software.market.xml
 
 # Camera
@@ -70,4 +73,15 @@ PRODUCT_PACKAGES += \
 
 PRODUCT_BOOT_JARS += \
     htcirlibs
+
+# NFC: NXP PN544 over ETSI HCI. The Nfc app (nxp DeviceHost) loads libnfc_jni,
+# which drives libnfc and opens /dev/pn544 through the nfc.msm8974 hw_module_t.
+PRODUCT_PACKAGES += \
+    com.android.nfc_extras \
+    libnfc \
+    libnfc_jni \
+    libnfc_ndef \
+    Nfc \
+    nfc.msm8974 \
+    Tag
 
