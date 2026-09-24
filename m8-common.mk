@@ -16,6 +16,10 @@
 #
 
 $(call inherit-product, $(SRC_TARGET_DIR)/product/product_launched_with_k.mk)
+
+# Release config: RELEASE_PACKAGE_NFC_STACK=NfcNci for products inheriting this
+# file, so the platform NFC stack replaces com.android.nfcservices.
+PRODUCT_RELEASE_CONFIG_MAPS += device/htc/m8-common/release/release_config_map.textproto
 $(call inherit-product, vendor/htc/m8-common/m8-common-vendor.mk)
 
 # Inherit from msm8974-common

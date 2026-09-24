@@ -1,0 +1,3 @@
+# Contribution to the bp1a release config declared in vendor/lineage/release.
+# It adds flag values from flag_values/bp1a/ and inherits nothing new.
+name: "bp1a"
