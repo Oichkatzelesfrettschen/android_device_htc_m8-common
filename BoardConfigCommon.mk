@@ -39,6 +39,9 @@ TARGET_PROCESS_SDK_VERSION_OVERRIDE += \
     /system/vendor/bin/mm-qcamera-daemon=23
 $(call soong_config_set,bionic_linker,process_sdk_version_overrides,$(strip $(TARGET_PROCESS_SDK_VERSION_OVERRIDE)))
 USE_DEVICE_SPECIFIC_CAMERA := true
+# The camera module is HALv1 only; frameworks/av serves its device@1.0
+# devices to Camera1 clients when this is set.
+$(call soong_config_set,camera,legacy_hal1,true)
 
 # NFC
 BOARD_NFC_HAL_SUFFIX := msm8974
