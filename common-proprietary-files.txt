@@ -59,7 +59,7 @@ vendor/lib/soundfx/libqcreverb.so
 bin/hci_qcomm_init:vendor/bin/hci_qcomm_init
 
 # Camera
-bin/mm-qcamera-daemon:vendor/bin/mm-qcamera-daemon
+bin/mm-qcamera-daemon:vendor/bin/mm-qcamera-daemon|56b32c588bcf063c0a9c8b184f162be4f7d7ef49|40b95b9adc8984be4c6aa38380744211eb7ffae6
 lib/libalDE_REC.so:vendor/lib/libalDE_REC.so
 lib/libalDE.so:vendor/lib/libalDE.so
 lib/libalDynamicWarping_REC.so:vendor/lib/libalDynamicWarping_REC.so
@@ -74,7 +74,7 @@ lib/libcamerapp.so:vendor/lib/libcamerapp.so
 lib/libcameraface.so:vendor/lib/libcameraface.so
 lib/libhtccamera_yushaniiproc.so:vendor/lib/libhtccamera_yushaniiproc.so
 lib/libhtc_depthmap.so:vendor/lib/libhtc_depthmap.so
-lib/libmmcamera_interface.so:vendor/lib/libmmcamera_interface.so
+lib/libmmcamera_interface.so:vendor/lib/libmmcamera_interface.so|8dd677052fed82a0b94920dbfce9eb6f6299c001|2959d2a280e7d581ed750978781db09a9c4d7ed8
 lib/libmmcamera_rubik.so:vendor/lib/libmmcamera_rubik.so
 lib/libmmjpeg_interface.so:vendor/lib/libmmjpeg_interface.so
 lib/libposteffect.so:vendor/lib/libposteffect.so

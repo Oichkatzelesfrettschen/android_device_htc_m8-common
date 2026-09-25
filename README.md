@@ -21,5 +21,9 @@ SELinux policy gives the camera HAL and `mm-qcamera-daemon` no `execmod`, and
 without the rewrite JPEG capture and face processing fail to load. The script
 checks both results against the sha256 values pinned in it and in
 `common-proprietary-files.txt`; `untextrel_camera.py` documents each patched
-instruction. The same rewrite runs as a `blob_fixup` when blobs are extracted
-with `extract-files.sh`.
+instruction. It also moves the camera daemon's socket: `mm-qcamera-daemon` and
+`libmmcamera_interface.so` name it `/data/cam_socket%d`, a path in the `/data`
+root that vendor domains may not create, and `retarget_camera_socket.py`
+rewrites both to the same-length `/dev/socket/cam/%d`, which msm8974-common's
+init creates and labels. The same rewrites run as a `blob_fixup` when blobs
+are extracted with `extract-files.sh`.

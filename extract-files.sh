@@ -24,6 +24,9 @@ function blob_fixup() {
     vendor/lib/libmmcamera_faceproc.so|vendor/lib/libmmjpeg.so)
         "${PYTHON}" "$(dirname "${BASH_SOURCE[0]}")/untextrel_camera.py" "${2}"
         ;;
+    vendor/bin/mm-qcamera-daemon|vendor/lib/libmmcamera_interface.so)
+        "${PYTHON}" "$(dirname "${BASH_SOURCE[0]}")/retarget_camera_socket.py" "${2}"
+        ;;
     esac
 }
 
