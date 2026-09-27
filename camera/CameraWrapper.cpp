@@ -27,7 +27,11 @@
 #include <cutils/log.h>
 #include <cutils/properties.h>
 
+#include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include <utils/threads.h>
 #include <utils/String8.h>
@@ -38,6 +42,38 @@
 
 static android::Mutex gCameraWrapperLock;
 static camera_module_t *gVendorModule = 0;
+static const camera_module_callbacks_t *gModuleCallbacks = NULL;
+static int gOpenCameraCount = 0;
+static bool gTorchEnabled = false;
+
+/* msm8974-m8-common.dtsi:160-168 names torch_0 and caps it at 200;
+ * tps61310_flashlight.c:1436-1468 maps its brightness to torch current. */
+static const char kTorchBrightness[] = "/sys/class/leds/torch_0/brightness";
+
+static void camera_notify_torch_status(int status)
+{
+    if (gModuleCallbacks && gModuleCallbacks->torch_mode_status_change)
+        gModuleCallbacks->torch_mode_status_change(gModuleCallbacks, "0", status);
+}
+
+static int camera_write_torch(bool enabled)
+{
+    const char *value = enabled ? "200\n" : "0\n";
+    const size_t length = strlen(value);
+    int fd = open(kTorchBrightness, O_WRONLY | O_CLOEXEC);
+    if (fd < 0)
+        return -errno;
+
+    ssize_t written;
+    do {
+        written = write(fd, value, length);
+    } while (written < 0 && errno == EINTR);
+    int result = written == static_cast<ssize_t>(length) ? 0 :
+            (written < 0 ? -errno : -EIO);
+    if (close(fd) < 0 && result == 0)
+        result = -errno;
+    return result;
+}
 
 static camera_notify_callback gUserNotifyCb = NULL;
 static camera_data_callback gUserDataCb = NULL;
@@ -46,11 +82,14 @@ static camera_request_memory gUserGetMemory = NULL;
 static void *gUserCameraDevice = NULL;
 
 static char **fixed_set_params = NULL;
+static int gFixedSetParamsCount = 0;
 
 static int camera_device_open(const hw_module_t *module, const char *name,
         hw_device_t **device);
 static int camera_get_number_of_cameras(void);
 static int camera_get_camera_info(int camera_id, struct camera_info *info);
+static int camera_module_set_callbacks(const camera_module_callbacks_t *callbacks);
+static int camera_set_torch_mode(const char *camera_id, bool enabled);
 
 static struct hw_module_methods_t camera_module_methods = {
     .open = camera_device_open
@@ -59,7 +98,7 @@ static struct hw_module_methods_t camera_module_methods = {
 camera_module_t HAL_MODULE_INFO_SYM = {
     .common = {
          .tag = HARDWARE_MODULE_TAG,
-         .module_api_version = CAMERA_MODULE_API_VERSION_1_0,
+         .module_api_version = CAMERA_MODULE_API_VERSION_2_4,
          .hal_api_version = HARDWARE_HAL_API_VERSION,
          .id = CAMERA_HARDWARE_MODULE_ID,
          .name = "M8 Camera Wrapper",
@@ -70,10 +109,10 @@ camera_module_t HAL_MODULE_INFO_SYM = {
     },
     .get_number_of_cameras = camera_get_number_of_cameras,
     .get_camera_info = camera_get_camera_info,
-    .set_callbacks = NULL, /* remove compilation warnings */
+    .set_callbacks = camera_module_set_callbacks,
     .get_vendor_tag_ops = NULL, /* remove compilation warnings */
     .open_legacy = NULL, /* remove compilation warnings */
-    .set_torch_mode = NULL, /* remove compilation warnings */
+    .set_torch_mode = camera_set_torch_mode,
     .init = NULL, /* remove compilation warnings */
     .reserved = {0}, /* remove compilation warnings */
 };
@@ -571,14 +610,17 @@ static int camera_device_close(hw_device_t *device)
         goto done;
     }
 
-    for (int i = 0; i < camera_get_number_of_cameras(); i++) {
-        if (fixed_set_params[i])
-            free(fixed_set_params[i]);
-    }
-
     wrapper_dev = (wrapper_camera_device_t*) device;
 
-    wrapper_dev->vendor->common.close((hw_device_t*)wrapper_dev->vendor);
+    ret = wrapper_dev->vendor->common.close((hw_device_t*)wrapper_dev->vendor);
+    if (gOpenCameraCount > 0 && --gOpenCameraCount == 0) {
+        for (int i = 0; i < gFixedSetParamsCount; i++)
+            free(fixed_set_params[i]);
+        free(fixed_set_params);
+        fixed_set_params = NULL;
+        gFixedSetParamsCount = 0;
+        camera_notify_torch_status(TORCH_MODE_STATUS_AVAILABLE_OFF);
+    }
     if (wrapper_dev->base.ops)
         free(wrapper_dev->base.ops);
     free(wrapper_dev);
@@ -619,20 +661,31 @@ static int camera_device_open(const hw_module_t *module, const char *name,
         cameraid = atoi(name);
         num_cameras = gVendorModule->get_number_of_cameras();
 
-        fixed_set_params = (char **) malloc(sizeof(char *) * num_cameras);
-        if (!fixed_set_params) {
-            ALOGE("parameter memory allocation fail");
-            rv = -ENOMEM;
-            goto fail;
-        }
-        memset(fixed_set_params, 0, sizeof(char *) * num_cameras);
-
-        if (cameraid < 0 || cameraid >= num_cameras) {
+        if (cameraid < 0 || cameraid >= camera_get_number_of_cameras() ||
+                cameraid >= num_cameras) {
             ALOGE("camera service provided cameraid out of bounds, "
                     "cameraid = %d, num supported = %d",
                     cameraid, num_cameras);
             rv = -EINVAL;
             goto fail;
+        }
+
+        if (!fixed_set_params) {
+            fixed_set_params = (char **)calloc(num_cameras, sizeof(char *));
+            if (!fixed_set_params) {
+                ALOGE("parameter memory allocation fail");
+                rv = -ENOMEM;
+                goto fail;
+            }
+            gFixedSetParamsCount = num_cameras;
+        }
+
+        if (gTorchEnabled) {
+            rv = camera_write_torch(false);
+            if (rv)
+                goto fail;
+            gTorchEnabled = false;
+            camera_notify_torch_status(TORCH_MODE_STATUS_AVAILABLE_OFF);
         }
 
         camera_device = (wrapper_camera_device_t*)malloc(sizeof(*camera_device));
@@ -694,18 +747,27 @@ static int camera_device_open(const hw_module_t *module, const char *name,
         camera_ops->dump = camera_dump;
 
         *device = &camera_device->base.common;
+        if (gOpenCameraCount++ == 0)
+            camera_notify_torch_status(TORCH_MODE_STATUS_NOT_AVAILABLE);
     }
 
     return rv;
 
 fail:
     if (camera_device) {
+        if (camera_device->vendor)
+            camera_device->vendor->common.close((hw_device_t*)camera_device->vendor);
         free(camera_device);
         camera_device = NULL;
     }
     if (camera_ops) {
         free(camera_ops);
         camera_ops = NULL;
+    }
+    if (gOpenCameraCount == 0) {
+        free(fixed_set_params);
+        fixed_set_params = NULL;
+        gFixedSetParamsCount = 0;
     }
     *device = NULL;
     return rv;
@@ -741,9 +803,72 @@ static int camera_get_camera_info(int camera_id, struct camera_info *info)
 {
     ALOGV("%s", __FUNCTION__);
     if (check_vendor_module())
-        return 0;
-    int rv = gVendorModule->get_camera_info(camera_id, info);
-    if (rv == 0 && camera_id >= NUM_USER_CAMERAS)
+        return -ENODEV;
+    if (!info || camera_id < 0 || camera_id >= camera_get_number_of_cameras())
+        return -EINVAL;
+
+    int result = gVendorModule->get_camera_info(camera_id, info);
+    if (result)
+        return result;
+    if (camera_id >= NUM_USER_CAMERAS)
         info->facing = CAMERA_FACING_BACK;
-    return rv;
+
+    /*
+     * A resource cost of 100 already makes every pair of cameras exclusive
+     * under camera service's budget of 100; the conflict list names the same
+     * exclusion for each exposed camera, the subcam included.
+     */
+    static char id0[] = "0";
+    static char id1[] = "1";
+    static char id2[] = "2";
+    static char *others[][2] = { { id1, id2 }, { id0, id2 }, { id0, id1 } };
+    if (camera_id >= (int)(sizeof(others) / sizeof(others[0])))
+        return -EINVAL;
+    info->device_version = CAMERA_DEVICE_API_VERSION_1_0;
+    info->resource_cost = 100;
+    info->conflicting_devices = others[camera_id];
+    info->conflicting_devices_length = camera_get_number_of_cameras() - 1;
+    return 0;
+}
+
+static int camera_module_set_callbacks(const camera_module_callbacks_t *callbacks)
+{
+    android::Mutex::Autolock lock(gCameraWrapperLock);
+    gModuleCallbacks = callbacks;
+    if (gOpenCameraCount > 0)
+        camera_notify_torch_status(TORCH_MODE_STATUS_NOT_AVAILABLE);
+    else if (gTorchEnabled)
+        camera_notify_torch_status(TORCH_MODE_STATUS_AVAILABLE_ON);
+    return 0;
+}
+
+/*
+ * The TPS61310 torch_0 LED sits beside the main sensor, so camera 0 owns the
+ * torch; every other exposed camera, the rear depth subcam included, has no
+ * flash unit of its own.
+ */
+static int camera_set_torch_mode(const char *camera_id, bool enabled)
+{
+    if (!camera_id || !*camera_id)
+        return -EINVAL;
+    char *end;
+    long id = strtol(camera_id, &end, 10);
+    if (*end || id < 0 || id >= camera_get_number_of_cameras())
+        return -EINVAL;
+    if (id != 0)
+        return -ENOSYS;
+
+    android::Mutex::Autolock lock(gCameraWrapperLock);
+    if (gOpenCameraCount > 0)
+        return -EBUSY;
+
+    int result = camera_write_torch(enabled);
+    if (result) {
+        ALOGE("torch brightness write failed: %d", result);
+        return result;
+    }
+    gTorchEnabled = enabled;
+    camera_notify_torch_status(enabled ? TORCH_MODE_STATUS_AVAILABLE_ON :
+            TORCH_MODE_STATUS_AVAILABLE_OFF);
+    return 0;
 }
