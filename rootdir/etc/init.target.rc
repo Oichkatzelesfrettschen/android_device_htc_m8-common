@@ -6,3 +6,9 @@ service cir_fw_update /system/vendor/bin/cir_fw_update -u cir.img
     user system
     group system
     oneshot
+
+# The camera provider (user cameraserver) drives the rear torch through the
+# torch_0 LED-class node for camera_module_t::set_torch_mode.
+on boot
+    chown cameraserver system /sys/class/leds/torch_0/brightness
+    chmod 0664 /sys/class/leds/torch_0/brightness
