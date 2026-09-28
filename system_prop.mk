@@ -16,6 +16,16 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.camera.record_force_yuv=true
 
+# This HAL1-only camera provider answers getCameraCharacteristics with
+# INVALID_OPERATION for every camera2 client, because the HAL1 device info
+# never overrides CameraManager's base implementation. This property
+# (frameworks/base, PR #1) makes CameraManager synthesize LEGACY
+# characteristics from getLegacyParameters/getCameraInfo through
+# LegacyMetadataMapper instead of failing before open, when
+# ICameraService.supportsCameraApi reports no API2 support.
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.camera.legacy_camera2_shim=true
+
 # Perf
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.vendor.extension_library=/vendor/lib/libqti-perfd-client.so
