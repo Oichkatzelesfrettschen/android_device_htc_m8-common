@@ -25,6 +25,7 @@
 
 #define LOG_TAG "CameraWrapper"
 #include <cutils/log.h>
+#include <cutils/properties.h>
 
 #include <string.h>
 
@@ -626,7 +627,7 @@ static int camera_device_open(const hw_module_t *module, const char *name,
         }
         memset(fixed_set_params, 0, sizeof(char *) * num_cameras);
 
-        if (cameraid > num_cameras) {
+        if (cameraid < 0 || cameraid >= num_cameras) {
             ALOGE("camera service provided cameraid out of bounds, "
                     "cameraid = %d, num supported = %d",
                     cameraid, num_cameras);
@@ -710,21 +711,39 @@ fail:
     return rv;
 }
 
+/*
+ * The vendor HAL enumerates three sensors: rear (OV4688), front (S5K5E or
+ * OV2722) and the rear depth subcam (OV2722, sensor position 2), which runs
+ * on its own CSIPHY1/CSID1/CCI pipeline. Apps that pick the first back-facing
+ * camera by index misbehave with a second one, so the subcam is exposed only
+ * when persist.camera.expose_depth_subcam is set.
+ */
+#define NUM_USER_CAMERAS 2
+
 static int camera_get_number_of_cameras(void)
 {
     ALOGV("%s", __FUNCTION__);
     if (check_vendor_module())
         return 0;
-//  return gVendorModule->get_number_of_cameras();
-//  Hard code this instead. Nothing uses the 3rd camera and
-//  it causes issues with some apps.
-    return 2;
+    int vendor_cameras = gVendorModule->get_number_of_cameras();
+    if (property_get_bool("persist.camera.expose_depth_subcam", false))
+        return vendor_cameras;
+    return vendor_cameras < NUM_USER_CAMERAS ? vendor_cameras : NUM_USER_CAMERAS;
 }
 
+/*
+ * The subcam's device-tree node carries qcom,sensor-position <2> (aux), which
+ * the vendor HAL reports as CAMERA_FACING_FRONT, although the sensor sits on
+ * the back beside the main camera. Its orientation is the node's
+ * qcom,mount-angle and passes through unchanged.
+ */
 static int camera_get_camera_info(int camera_id, struct camera_info *info)
 {
     ALOGV("%s", __FUNCTION__);
     if (check_vendor_module())
         return 0;
-    return gVendorModule->get_camera_info(camera_id, info);
+    int rv = gVendorModule->get_camera_info(camera_id, info);
+    if (rv == 0 && camera_id >= NUM_USER_CAMERAS)
+        info->facing = CAMERA_FACING_BACK;
+    return rv;
 }
