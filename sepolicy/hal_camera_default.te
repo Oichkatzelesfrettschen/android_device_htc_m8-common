@@ -1,2 +1,5 @@
 allow hal_camera_default sysfs_leds:lnk_file read;
 allow hal_camera_default sysfs_flashlight:file w_file_perms;
+# CameraWrapper holds the vendor HAL's fixed-fps override while video-mode 2
+# (1080p60) is set, and the vendor HAL reads it in the same process.
+set_prop(hal_camera_default, vendor_camera_fixed_fps_prop)
