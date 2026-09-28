@@ -731,10 +731,19 @@ static int camera_get_number_of_cameras(void)
     return vendor_cameras < NUM_USER_CAMERAS ? vendor_cameras : NUM_USER_CAMERAS;
 }
 
+/*
+ * The subcam's device-tree node carries qcom,sensor-position <2> (aux), which
+ * the vendor HAL reports as CAMERA_FACING_FRONT, although the sensor sits on
+ * the back beside the main camera. Its orientation is the node's
+ * qcom,mount-angle and passes through unchanged.
+ */
 static int camera_get_camera_info(int camera_id, struct camera_info *info)
 {
     ALOGV("%s", __FUNCTION__);
     if (check_vendor_module())
         return 0;
-    return gVendorModule->get_camera_info(camera_id, info);
+    int rv = gVendorModule->get_camera_info(camera_id, info);
+    if (rv == 0 && camera_id >= NUM_USER_CAMERAS)
+        info->facing = CAMERA_FACING_BACK;
+    return rv;
 }
