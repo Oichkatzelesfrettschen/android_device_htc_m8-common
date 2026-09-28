@@ -1,4 +1,9 @@
+# set_torch_mode opens /sys/class/leds/torch_0/brightness: search on the
+# sysfs_leds class directory, the torch_0 link, search on the sysfs_flashlight
+# device directory, then the write.
+allow hal_camera_default sysfs_leds:dir search;
 allow hal_camera_default sysfs_leds:lnk_file read;
+allow hal_camera_default sysfs_flashlight:dir search;
 allow hal_camera_default sysfs_flashlight:file w_file_perms;
 # CameraWrapper holds the vendor HAL's fixed-fps override while video-mode 2
 # (1080p60) is set, and the vendor HAL reads it in the same process.
