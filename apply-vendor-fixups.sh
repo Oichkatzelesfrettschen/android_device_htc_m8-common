@@ -9,8 +9,12 @@
 # rewritten file unchanged. mm-qcamera-daemon and libmmcamera_interface.so
 # name the daemon's socket /data/cam_socket%d, a path in the /data root that
 # vendor domains may not create; retarget_camera_socket.py moves it to
-# /dev/socket/cam/%d in both and leaves a retargeted file unchanged, so this
-# script is idempotent.
+# /dev/socket/cam/%d in both and leaves a retargeted file unchanged.
+# camera.vendor.msm8974.so AES-encrypts every camera 2 JPEG through
+# libhtc_depthmap.so's af_aes_cbc_encrypt before the compressed-image
+# callback; plaintext_camera2_jpeg.py turns the camera id branch in
+# QCameraPostProcessor::processJpegEvt into the path camera 0 takes and
+# leaves a patched file unchanged, so this script is idempotent.
 #
 # Usage: sh apply-vendor-fixups.sh [VENDOR_HTC_DIR]
 #   VENDOR_HTC_DIR defaults to vendor/htc of the tree holding this directory.
@@ -34,4 +38,6 @@ check "$lib/libmmcamera_faceproc.so" 3bb2d74fba0481402a8fdbccfc5c425850f5a784c85
 "$PYTHON" "$here/retarget_camera_socket.py" "$bin/mm-qcamera-daemon" "$lib/libmmcamera_interface.so"
 check "$bin/mm-qcamera-daemon" 18f70fef503c6eedbe4eb7cd5cd80d3e7edf1bfe54af1bd40a5f860a4c365ed0
 check "$lib/libmmcamera_interface.so" 161139c41436a8b008a204e0deeab4e37787d635b7f72c96a9d8e0d4c26404e1
+"$PYTHON" "$here/plaintext_camera2_jpeg.py" "$lib/hw/camera.vendor.msm8974.so"
+check "$lib/hw/camera.vendor.msm8974.so" b40a977ddef751b2be08fa7ed924ae5743764ab6d9cb33cd2fedc30caedee3cb
 echo "vendor/htc camera prebuilts rewritten"
