@@ -25,5 +25,10 @@ instruction. It also moves the camera daemon's socket: `mm-qcamera-daemon` and
 `libmmcamera_interface.so` name it `/data/cam_socket%d`, a path in the `/data`
 root that vendor domains may not create, and `retarget_camera_socket.py`
 rewrites both to the same-length `/dev/socket/cam/%d`, which msm8974-common's
-init creates and labels. The same rewrites run as a `blob_fixup` when blobs
+init creates and labels. `camera.vendor.msm8974.so` AES-encrypts every
+camera 2 (depth subcam) JPEG through `libhtc_depthmap.so` before the
+compressed-image callback, gated on camera id 2 and `ro.bootmode` other
+than `factory2`; `plaintext_camera2_jpeg.py` rewrites the one-byte branch
+condition after the camera id compare so camera 2 stills take camera 0's
+unencrypted path. The same rewrites run as a `blob_fixup` when blobs
 are extracted with `extract-files.sh`.

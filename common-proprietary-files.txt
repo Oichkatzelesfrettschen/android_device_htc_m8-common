@@ -79,7 +79,7 @@ lib/libmmcamera_rubik.so:vendor/lib/libmmcamera_rubik.so
 lib/libmmjpeg_interface.so:vendor/lib/libmmjpeg_interface.so
 lib/libposteffect.so:vendor/lib/libposteffect.so
 lib/libqomx_core.so:vendor/lib/libqomx_core.so
-lib/hw/camera.msm8974.so:vendor/lib/hw/camera.vendor.msm8974.so|19740b60ea36ac6c3573c9a431b9f223b71a59cb
+lib/hw/camera.msm8974.so:vendor/lib/hw/camera.vendor.msm8974.so|19740b60ea36ac6c3573c9a431b9f223b71a59cb|69716d8fbab55a84072368a63b222c128ac01def
 vendor/lib/libjpegdhw.so
 vendor/lib/libjpegehw.so
 vendor/lib/libmmcamera2_c2d_module.so
