@@ -27,6 +27,7 @@
 #include <cutils/log.h>
 #include <cutils/properties.h>
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -192,36 +193,63 @@ static char *camera_fixup_getparams(const char *settings)
 /*
  * camera.vendor.msm8974.so routes every preview fps range update through
  * QCameraParameters::setPreviewFpsRange(int, int), which replaces the range
- * with [N, N] fps when persist.debug.set.fixedfps holds a nonzero N. In
- * video-mode 2 (1080p60) the OV4688 runs its 60 fps mode, but the HAL commits
- * the [30, 30] entry of its capability table for that mode, and the sensor
- * module lengthens each frame to that range maximum. The wrapper holds the
- * property at 60 while a camera's parameters carry video-mode 2 and clears it
- * otherwise; the property persists across provider restarts, so the first
- * open clears it before the vendor HAL reads it.
+ * with [N, N] fps when persist.debug.set.fixedfps holds a nonzero N. The HAL
+ * capability tables lack the fixed ranges a recording asks for: in
+ * video-mode 2 (1080p60) the OV4688 runs its 60 fps mode but the HAL commits
+ * the [30, 30] entry, and under recording-hint the HAL offers only
+ * [15, 15] and [20, 30], so a [30, 30] request runs [20, 30] and auto
+ * exposure lengthens frames to 41 ms in dim light. The wrapper holds the
+ * property at 60 while a camera's parameters carry video-mode 2, at N while
+ * a recording-hint camera requests a fixed [N, N] range, and clears it
+ * otherwise. The fixup runs before the vendor set_parameters call, so the HAL
+ * reads the held value in the same update. The property persists across
+ * provider restarts, so the first open clears it before the vendor HAL reads
+ * it.
  */
 static const char kFixedFpsProperty[] = "persist.debug.set.fixedfps";
 static const char kHtcVideoMode[] = "video-mode";
 static const char kHtcVideoMode60Fps[] = "2";
+static const int kHtcVideoMode60FpsRate = 60;
 static android::Mutex gFixedFpsLock;
 static int gFixedFpsOwner = -1;
+static int gFixedFpsValue = 0;
 
-static void camera_write_fixed_fps(const char *value)
+static void camera_write_fixed_fps(int fps)
 {
+    char value[12];
+    snprintf(value, sizeof(value), "%d", fps);
     if (property_set(kFixedFpsProperty, value))
         ALOGE("%s: setting %s to %s failed", __FUNCTION__, kFixedFpsProperty, value);
 }
 
-static void camera_update_fixed_fps(int id, bool videoMode60Fps)
+/* The fixed rate these parameters need, or 0 for none. */
+static int camera_fixed_fps_for(const android::CameraParameters &params, bool isVideo)
+{
+    const char *videoMode = params.get(kHtcVideoMode);
+    if (videoMode && !strcmp(videoMode, kHtcVideoMode60Fps))
+        return kHtcVideoMode60FpsRate;
+    if (!isVideo)
+        return 0;
+
+    int minFps = 0, maxFps = 0;
+    params.getPreviewFpsRange(&minFps, &maxFps);
+    if (minFps > 0 && minFps == maxFps && maxFps % 1000 == 0)
+        return maxFps / 1000;
+    return 0;
+}
+
+static void camera_update_fixed_fps(int id, int fps)
 {
     android::Mutex::Autolock lock(gFixedFpsLock);
 
-    if (videoMode60Fps && gFixedFpsOwner != id) {
-        camera_write_fixed_fps("60");
+    if (fps > 0 && (gFixedFpsOwner != id || gFixedFpsValue != fps)) {
+        camera_write_fixed_fps(fps);
         gFixedFpsOwner = id;
-    } else if (!videoMode60Fps && gFixedFpsOwner == id) {
-        camera_write_fixed_fps("0");
+        gFixedFpsValue = fps;
+    } else if (fps == 0 && gFixedFpsOwner == id) {
+        camera_write_fixed_fps(0);
         gFixedFpsOwner = -1;
+        gFixedFpsValue = 0;
     }
 }
 
@@ -230,8 +258,9 @@ static void camera_reset_fixed_fps(void)
     android::Mutex::Autolock lock(gFixedFpsLock);
 
     if (property_get_int32(kFixedFpsProperty, 0) != 0)
-        camera_write_fixed_fps("0");
+        camera_write_fixed_fps(0);
     gFixedFpsOwner = -1;
+    gFixedFpsValue = 0;
 }
 
 static char *camera_fixup_setparams(int id, const char *settings)
@@ -250,8 +279,7 @@ static char *camera_fixup_setparams(int id, const char *settings)
         isVideo = !strcmp(params.get(android::CameraParameters::KEY_RECORDING_HINT), "true");
     }
 
-    const char *videoMode = params.get(kHtcVideoMode);
-    camera_update_fixed_fps(id, videoMode && !strcmp(videoMode, kHtcVideoMode60Fps));
+    camera_update_fixed_fps(id, camera_fixed_fps_for(params, isVideo));
 
     /* Enable fixed fps mode */
     params.set("preview-frame-rate-mode", "frame-rate-fixed");
@@ -661,7 +689,7 @@ static int camera_device_close(hw_device_t *device)
     wrapper_dev = (wrapper_camera_device_t*) device;
 
     ret = wrapper_dev->vendor->common.close((hw_device_t*)wrapper_dev->vendor);
-    camera_update_fixed_fps(wrapper_dev->id, false);
+    camera_update_fixed_fps(wrapper_dev->id, 0);
     if (gOpenCameraCount > 0 && --gOpenCameraCount == 0) {
         for (int i = 0; i < gFixedSetParamsCount; i++)
             free(fixed_set_params[i]);
