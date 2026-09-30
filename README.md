@@ -30,5 +30,12 @@ camera 2 (depth subcam) JPEG through `libhtc_depthmap.so` before the
 compressed-image callback, gated on camera id 2 and `ro.bootmode` other
 than `factory2`; `plaintext_camera2_jpeg.py` rewrites the one-byte branch
 condition after the camera id compare so camera 2 stills take camera 0's
-unencrypted path. The same rewrites run as a `blob_fixup` when blobs
-are extracted with `extract-files.sh`.
+unencrypted path. The OV2722 subcamera AEC curve in
+`libtuning_aec_ov2722_subcam_zsl.so` runs out to 3201 or 6421 lines, so in dim
+light camera 2 stretches its frames to 10.5 fps or less whatever its
+`preview-fps-range`; `cap_subcam_aec_curve.py` caps every row at 1096 lines
+with the gain scaled up to keep the exposure, and flattens the stock gain
+field where it wraps at the curve's end, so camera 2 holds 30 fps and the
+kernel's OV2722 frame lock can shorten its frame to camera 0's period. The
+same rewrites run as a `blob_fixup` when blobs are extracted with
+`extract-files.sh`.

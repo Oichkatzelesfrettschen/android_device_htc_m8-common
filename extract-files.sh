@@ -28,6 +28,9 @@ function blob_fixup() {
     vendor/bin/mm-qcamera-daemon|vendor/lib/libmmcamera_interface.so)
         "${PYTHON}" "$(dirname "${BASH_SOURCE[0]}")/retarget_camera_socket.py" "${2}"
         ;;
+    vendor/lib/libtuning_aec_ov2722_subcam_zsl.so)
+        "${PYTHON}" "$(dirname "${BASH_SOURCE[0]}")/cap_subcam_aec_curve.py" "${2}"
+        ;;
     esac
 }
 
