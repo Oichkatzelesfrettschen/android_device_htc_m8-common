@@ -76,11 +76,25 @@ static int camera_write_torch(bool enabled)
     return result;
 }
 
-static camera_notify_callback gUserNotifyCb = NULL;
-static camera_data_callback gUserDataCb = NULL;
-static camera_data_timestamp_callback gUserDataCbTimestamp = NULL;
-static camera_request_memory gUserGetMemory = NULL;
-static void *gUserCameraDevice = NULL;
+/*
+ * Each exposed camera id owns one set of callback trampolines, handed to its
+ * vendor device in set_callbacks, and each trampoline forwards to the client
+ * callbacks and client cookie recorded for that id, so cameras 0 and 2 stream
+ * to their own clients at the same time. The vendor HAL's cookie never selects
+ * the client: it passes an object of its own to get_memory, while the camera
+ * provider's HAL1 get_memory (CameraDevice::sGetMemory) reads its cookie as
+ * the CameraDevice that registers the buffer.
+ */
+struct client_callbacks {
+    camera_notify_callback notify;
+    camera_data_callback data;
+    camera_data_timestamp_callback data_timestamp;
+    camera_request_memory get_memory;
+    void *user;
+};
+
+#define MAX_WRAPPED_CAMERAS 3
+static client_callbacks gClients[MAX_WRAPPED_CAMERAS];
 
 static char **fixed_set_params = NULL;
 static int gFixedSetParamsCount = 0;
@@ -319,8 +333,10 @@ static int camera_set_preview_window(struct camera_device *device,
     return VENDOR_CALL(device, set_preview_window, window);
 }
 
-void camera_notify_cb(int32_t msg_type, int32_t ext1, int32_t ext2, void *user __unused) {
-    gUserNotifyCb(msg_type, ext1, ext2, gUserCameraDevice);
+template <int N>
+static void camera_notify_cb(int32_t msg_type, int32_t ext1, int32_t ext2, void *user __unused) {
+    const client_callbacks &c = gClients[N];
+    c.notify(msg_type, ext1, ext2, c.user);
 }
 
 /*
@@ -353,10 +369,10 @@ static const size_t kHtcCameraFaceSize = 0x1b0;
  * its face arrays for ten records. */
 static const int kMaxFaces = 10;
 
-void camera_data_cb(int32_t msg_type, const camera_memory_t *data, unsigned int index,
-        camera_frame_metadata_t *metadata, void *user __unused) {
+static void camera_forward_data(const client_callbacks &c, int32_t msg_type,
+        const camera_memory_t *data, unsigned int index, camera_frame_metadata_t *metadata) {
     if (metadata == NULL) {
-        gUserDataCb(msg_type, data, index, NULL, gUserCameraDevice);
+        c.data(msg_type, data, index, NULL, c.user);
         return;
     }
 
@@ -391,18 +407,37 @@ void camera_data_cb(int32_t msg_type, const camera_memory_t *data, unsigned int 
     camera_frame_metadata_t aosp;
     aosp.number_of_faces = count;
     aosp.faces = faces;
-    gUserDataCb(msg_type, data, index, &aosp, gUserCameraDevice);
+    c.data(msg_type, data, index, &aosp, c.user);
 }
 
-void camera_data_cb_timestamp(nsecs_t timestamp, int32_t msg_type,
+template <int N>
+static void camera_data_cb(int32_t msg_type, const camera_memory_t *data, unsigned int index,
+        camera_frame_metadata_t *metadata, void *user __unused) {
+    camera_forward_data(gClients[N], msg_type, data, index, metadata);
+}
+
+template <int N>
+static void camera_data_cb_timestamp(nsecs_t timestamp, int32_t msg_type,
         const camera_memory_t *data, unsigned index, void *user __unused) {
-    gUserDataCbTimestamp(timestamp, msg_type, data, index, gUserCameraDevice);
+    const client_callbacks &c = gClients[N];
+    c.data_timestamp(timestamp, msg_type, data, index, c.user);
 }
 
-camera_memory_t* camera_get_memory(int fd, size_t buf_size,
+template <int N>
+static camera_memory_t *camera_get_memory(int fd, size_t buf_size,
         uint_t num_bufs, void *user __unused) {
-    return gUserGetMemory(fd, buf_size, num_bufs, gUserCameraDevice);
+    const client_callbacks &c = gClients[N];
+    return c.get_memory(fd, buf_size, num_bufs, c.user);
 }
+
+static const camera_notify_callback kNotifyCbs[MAX_WRAPPED_CAMERAS] = {
+    camera_notify_cb<0>, camera_notify_cb<1>, camera_notify_cb<2> };
+static const camera_data_callback kDataCbs[MAX_WRAPPED_CAMERAS] = {
+    camera_data_cb<0>, camera_data_cb<1>, camera_data_cb<2> };
+static const camera_data_timestamp_callback kDataTimestampCbs[MAX_WRAPPED_CAMERAS] = {
+    camera_data_cb_timestamp<0>, camera_data_cb_timestamp<1>, camera_data_cb_timestamp<2> };
+static const camera_request_memory kGetMemoryCbs[MAX_WRAPPED_CAMERAS] = {
+    camera_get_memory<0>, camera_get_memory<1>, camera_get_memory<2> };
 
 static void camera_set_callbacks(struct camera_device *device,
         camera_notify_callback notify_cb,
@@ -417,14 +452,15 @@ static void camera_set_callbacks(struct camera_device *device,
     ALOGV("%s->%08X->%08X", __FUNCTION__, (uintptr_t)device,
             (uintptr_t)(((wrapper_camera_device_t*)device)->vendor));
 
-    gUserNotifyCb = notify_cb;
-    gUserDataCb = data_cb;
-    gUserDataCbTimestamp = data_cb_timestamp;
-    gUserGetMemory = get_memory;
-    gUserCameraDevice = user;
+    int id = CAMERA_ID(device);
+    if (id < 0 || id >= MAX_WRAPPED_CAMERAS) {
+        ALOGE("%s: camera %d has no callback slot", __FUNCTION__, id);
+        return;
+    }
+    gClients[id] = { notify_cb, data_cb, data_cb_timestamp, get_memory, user };
 
-    VENDOR_CALL(device, set_callbacks, camera_notify_cb, camera_data_cb,
-            camera_data_cb_timestamp, camera_get_memory, user);
+    VENDOR_CALL(device, set_callbacks, kNotifyCbs[id], kDataCbs[id],
+            kDataTimestampCbs[id], kGetMemoryCbs[id], user);
 }
 
 static void camera_enable_msg_type(struct camera_device *device,
@@ -894,20 +930,28 @@ static int camera_get_camera_info(int camera_id, struct camera_info *info)
         info->facing = CAMERA_FACING_BACK;
 
     /*
-     * A resource cost of 100 already makes every pair of cameras exclusive
-     * under camera service's budget of 100; the conflict list names the same
-     * exclusion for each exposed camera, the subcam included.
+     * The main camera (0) and the subcam (2) sit on separate CSIPHY/CSID/VFE
+     * paths and form the Duo stereo pair, so each costs 50 of camera service's
+     * budget of 100 and they open together. The front camera (1) costs 100
+     * and conflicts with both.
      */
     static char id0[] = "0";
     static char id1[] = "1";
     static char id2[] = "2";
-    static char *others[][2] = { { id1, id2 }, { id0, id2 }, { id0, id1 } };
-    if (camera_id >= (int)(sizeof(others) / sizeof(others[0])))
+    static char *front_conflicts[] = { id0, id2 };
+    static char *pair_conflicts[] = { id1 };
+    if (camera_id >= MAX_WRAPPED_CAMERAS)
         return -EINVAL;
     info->device_version = CAMERA_DEVICE_API_VERSION_1_0;
-    info->resource_cost = 100;
-    info->conflicting_devices = others[camera_id];
-    info->conflicting_devices_length = camera_get_number_of_cameras() - 1;
+    if (camera_id == 1) {
+        info->resource_cost = 100;
+        info->conflicting_devices = front_conflicts;
+        info->conflicting_devices_length = camera_get_number_of_cameras() > 2 ? 2 : 1;
+    } else {
+        info->resource_cost = 50;
+        info->conflicting_devices = pair_conflicts;
+        info->conflicting_devices_length = 1;
+    }
     return 0;
 }
 
