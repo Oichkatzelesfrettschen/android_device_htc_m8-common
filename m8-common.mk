@@ -97,3 +97,5 @@ PRODUCT_PACKAGES += \
     htc_m8_config_link_speaker_cal_acdb \
     htc_m8_config_link_cir_img \
     htc_m8_config_link_tfa
+
+PRODUCT_PACKAGES += htc_m8_firmware_directory_link

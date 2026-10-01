@@ -131,13 +131,13 @@ vendor/lib/libchromatix_vd6869_default_video.so
 vendor/lib/libchromatix_vd6869_preview.so
 
 # Camera firmware
-etc/firmware/alIAF_InData_4M2M
+etc/firmware/alIAF_InData_4M2M:vendor/firmware/alIAF_InData_4M2M
 etc/firmware/cpp_firmware_v1_1_1.fw:vendor/firmware/cpp_firmware_v1_1_1.fw
 etc/firmware/cpp_firmware_v1_1_6.fw:vendor/firmware/cpp_firmware_v1_1_6.fw
 etc/firmware/cpp_firmware_v1_2_0.fw:vendor/firmware/cpp_firmware_v1_2_0.fw
-etc/firmware/ILP0100_IPM_Code_out.bin
-etc/firmware/ILP0100_IPM_Data_out.bin
-etc/firmware/lscbuffer_rev2.bin
+etc/firmware/ILP0100_IPM_Code_out.bin:vendor/firmware/ILP0100_IPM_Code_out.bin
+etc/firmware/ILP0100_IPM_Data_out.bin:vendor/firmware/ILP0100_IPM_Data_out.bin
+etc/firmware/lscbuffer_rev2.bin:vendor/firmware/lscbuffer_rev2.bin
 etc/hldm.bin
 etc/hltof.bin
 etc/hltrd.bin

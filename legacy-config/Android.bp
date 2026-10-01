@@ -59,3 +59,10 @@ install_symlink {
     installed_location: "etc/tfa",
     symlink_target: "/vendor/etc/tfa",
 }
+
+// ueventd and camera consumers resolve their legacy firmware directory.
+install_symlink {
+    name: "htc_m8_firmware_directory_link",
+    installed_location: "etc/firmware",
+    symlink_target: "/vendor/firmware",
+}
