@@ -1,0 +1,61 @@
+// Preserve paths compiled into legacy consumers; contents remain vendor-owned.
+
+install_symlink {
+    name: "htc_m8_config_link_bluetooth_cal_acdb",
+    installed_location: "etc/Bluetooth_cal.acdb",
+    symlink_target: "/vendor/etc/Bluetooth_cal.acdb",
+}
+
+install_symlink {
+    name: "htc_m8_config_link_bluetooth_cal_recovery_acdb",
+    installed_location: "etc/Bluetooth_cal_recovery.acdb",
+    symlink_target: "/vendor/etc/Bluetooth_cal_recovery.acdb",
+}
+
+install_symlink {
+    name: "htc_m8_config_link_general_cal_acdb",
+    installed_location: "etc/General_cal.acdb",
+    symlink_target: "/vendor/etc/General_cal.acdb",
+}
+
+install_symlink {
+    name: "htc_m8_config_link_global_cal_acdb",
+    installed_location: "etc/Global_cal.acdb",
+    symlink_target: "/vendor/etc/Global_cal.acdb",
+}
+
+install_symlink {
+    name: "htc_m8_config_link_handset_cal_acdb",
+    installed_location: "etc/Handset_cal.acdb",
+    symlink_target: "/vendor/etc/Handset_cal.acdb",
+}
+
+install_symlink {
+    name: "htc_m8_config_link_hdmi_cal_acdb",
+    installed_location: "etc/Hdmi_cal.acdb",
+    symlink_target: "/vendor/etc/Hdmi_cal.acdb",
+}
+
+install_symlink {
+    name: "htc_m8_config_link_headset_cal_acdb",
+    installed_location: "etc/Headset_cal.acdb",
+    symlink_target: "/vendor/etc/Headset_cal.acdb",
+}
+
+install_symlink {
+    name: "htc_m8_config_link_speaker_cal_acdb",
+    installed_location: "etc/Speaker_cal.acdb",
+    symlink_target: "/vendor/etc/Speaker_cal.acdb",
+}
+
+install_symlink {
+    name: "htc_m8_config_link_cir_img",
+    installed_location: "etc/cir.img",
+    symlink_target: "/vendor/etc/cir.img",
+}
+
+install_symlink {
+    name: "htc_m8_config_link_tfa",
+    installed_location: "etc/tfa",
+    symlink_target: "/vendor/etc/tfa",
+}

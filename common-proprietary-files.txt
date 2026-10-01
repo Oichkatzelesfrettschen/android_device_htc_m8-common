@@ -9,38 +9,38 @@ vendor/lib/libscve.so
 vendor/lib/libscve_stub.so
 
 # Audio ACDB
-etc/Bluetooth_cal.acdb
-etc/Bluetooth_cal_recovery.acdb
-etc/General_cal.acdb
-etc/Global_cal.acdb
-etc/Handset_cal.acdb
-etc/Hdmi_cal.acdb
-etc/Headset_cal.acdb
-etc/Speaker_cal.acdb
+etc/Bluetooth_cal.acdb:vendor/etc/Bluetooth_cal.acdb
+etc/Bluetooth_cal_recovery.acdb:vendor/etc/Bluetooth_cal_recovery.acdb
+etc/General_cal.acdb:vendor/etc/General_cal.acdb
+etc/Global_cal.acdb:vendor/etc/Global_cal.acdb
+etc/Handset_cal.acdb:vendor/etc/Handset_cal.acdb
+etc/Hdmi_cal.acdb:vendor/etc/Hdmi_cal.acdb
+etc/Headset_cal.acdb:vendor/etc/Headset_cal.acdb
+etc/Speaker_cal.acdb:vendor/etc/Speaker_cal.acdb
 
 # Audio amplifier
-etc/tfa/playback.drc
-etc/tfa/playback.eq
-etc/tfa/playback_l.drc
-etc/tfa/playback_l.eq
-etc/tfa/playback_l.preset
-etc/tfa/playback.preset
-etc/tfa/tfa9895.config
-etc/tfa/tfa9895_l.speaker
-etc/tfa/tfa9895.patch
-etc/tfa/tfa9895.speaker
-etc/tfa/voice_l.drc
-etc/tfa/voice.drc
-etc/tfa/voice_l.eq
-etc/tfa/voice.eq
-etc/tfa/voice_l.preset
-etc/tfa/voice.preset
-etc/tfa/voip.drc
-etc/tfa/voip.eq
-etc/tfa/voip_l.drc
-etc/tfa/voip_l.eq
-etc/tfa/voip_l.preset
-etc/tfa/voip.preset
+etc/tfa/playback.drc:vendor/etc/tfa/playback.drc
+etc/tfa/playback.eq:vendor/etc/tfa/playback.eq
+etc/tfa/playback_l.drc:vendor/etc/tfa/playback_l.drc
+etc/tfa/playback_l.eq:vendor/etc/tfa/playback_l.eq
+etc/tfa/playback_l.preset:vendor/etc/tfa/playback_l.preset
+etc/tfa/playback.preset:vendor/etc/tfa/playback.preset
+etc/tfa/tfa9895.config:vendor/etc/tfa/tfa9895.config
+etc/tfa/tfa9895_l.speaker:vendor/etc/tfa/tfa9895_l.speaker
+etc/tfa/tfa9895.patch:vendor/etc/tfa/tfa9895.patch
+etc/tfa/tfa9895.speaker:vendor/etc/tfa/tfa9895.speaker
+etc/tfa/voice_l.drc:vendor/etc/tfa/voice_l.drc
+etc/tfa/voice.drc:vendor/etc/tfa/voice.drc
+etc/tfa/voice_l.eq:vendor/etc/tfa/voice_l.eq
+etc/tfa/voice.eq:vendor/etc/tfa/voice.eq
+etc/tfa/voice_l.preset:vendor/etc/tfa/voice_l.preset
+etc/tfa/voice.preset:vendor/etc/tfa/voice.preset
+etc/tfa/voip.drc:vendor/etc/tfa/voip.drc
+etc/tfa/voip.eq:vendor/etc/tfa/voip.eq
+etc/tfa/voip_l.drc:vendor/etc/tfa/voip_l.drc
+etc/tfa/voip_l.eq:vendor/etc/tfa/voip_l.eq
+etc/tfa/voip_l.preset:vendor/etc/tfa/voip_l.preset
+etc/tfa/voip.preset:vendor/etc/tfa/voip.preset
 etc/RT5501
 etc/sound_mfg_DMIC.txt
 etc/sound_mfg.txt
@@ -209,7 +209,7 @@ etc/firmware/dxhdcp2.mdt:vendor/firmware/dxhdcp2.mdt
 # IRDA
 -app/CIRModule/CIRModule.apk
 bin/cir_fw_update:vendor/bin/cir_fw_update
-etc/cir.img
+etc/cir.img:vendor/etc/cir.img
 -framework/htcirlibs.jar
 lib/hw/consumerir.default.so:vendor/lib/hw/consumerir.msm8974.so
 lib/libhtcirinterface_jni.so
