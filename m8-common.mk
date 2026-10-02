@@ -85,3 +85,17 @@ PRODUCT_PACKAGES += \
     nfc.msm8974 \
     Tag
 
+# Compatibility paths resolve to vendor-owned configuration.
+PRODUCT_PACKAGES += \
+    htc_m8_config_link_bluetooth_cal_acdb \
+    htc_m8_config_link_bluetooth_cal_recovery_acdb \
+    htc_m8_config_link_general_cal_acdb \
+    htc_m8_config_link_global_cal_acdb \
+    htc_m8_config_link_handset_cal_acdb \
+    htc_m8_config_link_hdmi_cal_acdb \
+    htc_m8_config_link_headset_cal_acdb \
+    htc_m8_config_link_speaker_cal_acdb \
+    htc_m8_config_link_cir_img \
+    htc_m8_config_link_tfa
+
+PRODUCT_PACKAGES += htc_m8_firmware_directory_link
