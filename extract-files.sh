@@ -31,6 +31,9 @@ function blob_fixup() {
     vendor/lib/libtuning_aec_ov2722_subcam_zsl.so)
         "${PYTHON}" "$(dirname "${BASH_SOURCE[0]}")/cap_subcam_aec_curve.py" "${2}"
         ;;
+    vendor/bin/netmgrd)
+        "${PYTHON}" "$(dirname "${BASH_SOURCE[0]}")/netmgrd_kif_cleanup_reason.py" "${2}"
+        ;;
     esac
 }
 
