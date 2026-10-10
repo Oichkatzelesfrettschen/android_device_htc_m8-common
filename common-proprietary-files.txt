@@ -9,38 +9,38 @@ vendor/lib/libscve.so
 vendor/lib/libscve_stub.so
 
 # Audio ACDB
-etc/Bluetooth_cal.acdb
-etc/Bluetooth_cal_recovery.acdb
-etc/General_cal.acdb
-etc/Global_cal.acdb
-etc/Handset_cal.acdb
-etc/Hdmi_cal.acdb
-etc/Headset_cal.acdb
-etc/Speaker_cal.acdb
+etc/Bluetooth_cal.acdb:vendor/etc/Bluetooth_cal.acdb
+etc/Bluetooth_cal_recovery.acdb:vendor/etc/Bluetooth_cal_recovery.acdb
+etc/General_cal.acdb:vendor/etc/General_cal.acdb
+etc/Global_cal.acdb:vendor/etc/Global_cal.acdb
+etc/Handset_cal.acdb:vendor/etc/Handset_cal.acdb
+etc/Hdmi_cal.acdb:vendor/etc/Hdmi_cal.acdb
+etc/Headset_cal.acdb:vendor/etc/Headset_cal.acdb
+etc/Speaker_cal.acdb:vendor/etc/Speaker_cal.acdb
 
 # Audio amplifier
-etc/tfa/playback.drc
-etc/tfa/playback.eq
-etc/tfa/playback_l.drc
-etc/tfa/playback_l.eq
-etc/tfa/playback_l.preset
-etc/tfa/playback.preset
-etc/tfa/tfa9895.config
-etc/tfa/tfa9895_l.speaker
-etc/tfa/tfa9895.patch
-etc/tfa/tfa9895.speaker
-etc/tfa/voice_l.drc
-etc/tfa/voice.drc
-etc/tfa/voice_l.eq
-etc/tfa/voice.eq
-etc/tfa/voice_l.preset
-etc/tfa/voice.preset
-etc/tfa/voip.drc
-etc/tfa/voip.eq
-etc/tfa/voip_l.drc
-etc/tfa/voip_l.eq
-etc/tfa/voip_l.preset
-etc/tfa/voip.preset
+etc/tfa/playback.drc:vendor/etc/tfa/playback.drc
+etc/tfa/playback.eq:vendor/etc/tfa/playback.eq
+etc/tfa/playback_l.drc:vendor/etc/tfa/playback_l.drc
+etc/tfa/playback_l.eq:vendor/etc/tfa/playback_l.eq
+etc/tfa/playback_l.preset:vendor/etc/tfa/playback_l.preset
+etc/tfa/playback.preset:vendor/etc/tfa/playback.preset
+etc/tfa/tfa9895.config:vendor/etc/tfa/tfa9895.config
+etc/tfa/tfa9895_l.speaker:vendor/etc/tfa/tfa9895_l.speaker
+etc/tfa/tfa9895.patch:vendor/etc/tfa/tfa9895.patch
+etc/tfa/tfa9895.speaker:vendor/etc/tfa/tfa9895.speaker
+etc/tfa/voice_l.drc:vendor/etc/tfa/voice_l.drc
+etc/tfa/voice.drc:vendor/etc/tfa/voice.drc
+etc/tfa/voice_l.eq:vendor/etc/tfa/voice_l.eq
+etc/tfa/voice.eq:vendor/etc/tfa/voice.eq
+etc/tfa/voice_l.preset:vendor/etc/tfa/voice_l.preset
+etc/tfa/voice.preset:vendor/etc/tfa/voice.preset
+etc/tfa/voip.drc:vendor/etc/tfa/voip.drc
+etc/tfa/voip.eq:vendor/etc/tfa/voip.eq
+etc/tfa/voip_l.drc:vendor/etc/tfa/voip_l.drc
+etc/tfa/voip_l.eq:vendor/etc/tfa/voip_l.eq
+etc/tfa/voip_l.preset:vendor/etc/tfa/voip_l.preset
+etc/tfa/voip.preset:vendor/etc/tfa/voip.preset
 etc/RT5501
 etc/sound_mfg_DMIC.txt
 etc/sound_mfg.txt
@@ -59,7 +59,7 @@ vendor/lib/soundfx/libqcreverb.so
 bin/hci_qcomm_init:vendor/bin/hci_qcomm_init
 
 # Camera
-bin/mm-qcamera-daemon:vendor/bin/mm-qcamera-daemon
+bin/mm-qcamera-daemon:vendor/bin/mm-qcamera-daemon|56b32c588bcf063c0a9c8b184f162be4f7d7ef49|40b95b9adc8984be4c6aa38380744211eb7ffae6
 lib/libalDE_REC.so:vendor/lib/libalDE_REC.so
 lib/libalDE.so:vendor/lib/libalDE.so
 lib/libalDynamicWarping_REC.so:vendor/lib/libalDynamicWarping_REC.so
@@ -74,12 +74,12 @@ lib/libcamerapp.so:vendor/lib/libcamerapp.so
 lib/libcameraface.so:vendor/lib/libcameraface.so
 lib/libhtccamera_yushaniiproc.so:vendor/lib/libhtccamera_yushaniiproc.so
 lib/libhtc_depthmap.so:vendor/lib/libhtc_depthmap.so
-lib/libmmcamera_interface.so:vendor/lib/libmmcamera_interface.so
+lib/libmmcamera_interface.so:vendor/lib/libmmcamera_interface.so|8dd677052fed82a0b94920dbfce9eb6f6299c001|2959d2a280e7d581ed750978781db09a9c4d7ed8
 lib/libmmcamera_rubik.so:vendor/lib/libmmcamera_rubik.so
 lib/libmmjpeg_interface.so:vendor/lib/libmmjpeg_interface.so
 lib/libposteffect.so:vendor/lib/libposteffect.so
 lib/libqomx_core.so:vendor/lib/libqomx_core.so
-lib/hw/camera.msm8974.so:vendor/lib/hw/camera.vendor.msm8974.so|19740b60ea36ac6c3573c9a431b9f223b71a59cb
+lib/hw/camera.msm8974.so:vendor/lib/hw/camera.vendor.msm8974.so|19740b60ea36ac6c3573c9a431b9f223b71a59cb|69716d8fbab55a84072368a63b222c128ac01def
 vendor/lib/libjpegdhw.so
 vendor/lib/libjpegehw.so
 vendor/lib/libmmcamera2_c2d_module.so
@@ -93,7 +93,7 @@ vendor/lib/libmmcamera2_stats_algorithm.so
 vendor/lib/libmmcamera2_stats_modules.so
 vendor/lib/libmmcamera2_vpe_module.so
 vendor/lib/libmmcamera2_wnr_module.so
-vendor/lib/libmmcamera_faceproc.so
+vendor/lib/libmmcamera_faceproc.so|8a3c342c3b1ab82f735ff2331fc484d49a2b3941|8a53fae7f423f5da0ec1847eb9742360d2ac5cab
 vendor/lib/libmmcamera_hdr_gb_lib.so
 vendor/lib/libmmcamera_hdr_lib.so
 vendor/lib/libmmcamera_imglib.so
@@ -101,7 +101,7 @@ vendor/lib/libmmcamera_tintless_algo.so
 vendor/lib/libmmcamera_tintless_bg_pca_algo.so
 vendor/lib/libmmcamera_wavelet_lib.so
 vendor/lib/libmmipl.so
-vendor/lib/libmmjpeg.so
+vendor/lib/libmmjpeg.so|f5f097c02091849b2fd701392b8d5576843ed9c8|cb803741901c35af5370bcb072274acf1fc31794
 vendor/lib/libmmqjpeg_codec.so
 vendor/lib/liboemcamera.so
 vendor/lib/libqomx_jpegdec.so
@@ -131,13 +131,13 @@ vendor/lib/libchromatix_vd6869_default_video.so
 vendor/lib/libchromatix_vd6869_preview.so
 
 # Camera firmware
-etc/firmware/alIAF_InData_4M2M
+etc/firmware/alIAF_InData_4M2M:vendor/firmware/alIAF_InData_4M2M
 etc/firmware/cpp_firmware_v1_1_1.fw:vendor/firmware/cpp_firmware_v1_1_1.fw
 etc/firmware/cpp_firmware_v1_1_6.fw:vendor/firmware/cpp_firmware_v1_1_6.fw
 etc/firmware/cpp_firmware_v1_2_0.fw:vendor/firmware/cpp_firmware_v1_2_0.fw
-etc/firmware/ILP0100_IPM_Code_out.bin
-etc/firmware/ILP0100_IPM_Data_out.bin
-etc/firmware/lscbuffer_rev2.bin
+etc/firmware/ILP0100_IPM_Code_out.bin:vendor/firmware/ILP0100_IPM_Code_out.bin
+etc/firmware/ILP0100_IPM_Data_out.bin:vendor/firmware/ILP0100_IPM_Data_out.bin
+etc/firmware/lscbuffer_rev2.bin:vendor/firmware/lscbuffer_rev2.bin
 etc/hldm.bin
 etc/hltof.bin
 etc/hltrd.bin
@@ -209,7 +209,7 @@ etc/firmware/dxhdcp2.mdt:vendor/firmware/dxhdcp2.mdt
 # IRDA
 -app/CIRModule/CIRModule.apk
 bin/cir_fw_update:vendor/bin/cir_fw_update
-etc/cir.img
+etc/cir.img:vendor/etc/cir.img
 -framework/htcirlibs.jar
 lib/hw/consumerir.default.so:vendor/lib/hw/consumerir.msm8974.so
 lib/libhtcirinterface_jni.so

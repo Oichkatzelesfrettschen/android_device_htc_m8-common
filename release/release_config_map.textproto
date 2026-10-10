@@ -1,0 +1,6 @@
+# Release config contributions for products that inherit m8-common.mk, added
+# through PRODUCT_RELEASE_CONFIG_MAPS. Other products never load this map.
+default_containers: "product"
+default_containers: "system"
+default_containers: "system_ext"
+default_containers: "vendor"

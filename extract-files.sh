@@ -14,10 +14,22 @@ fi
 
 set -e
 
+PYTHON=${PYTHON:-python3}
+
 function blob_fixup() {
     case "${1}" in
     vendor/lib/hw/camera.vendor.msm8974.so)
         "${PATCHELF}" --replace-needed "libcamera_client.so" "libcamera_client_htc.so" "${2}"
+        "${PYTHON}" "$(dirname "${BASH_SOURCE[0]}")/plaintext_camera2_jpeg.py" "${2}"
+        ;;
+    vendor/lib/libmmcamera_faceproc.so|vendor/lib/libmmjpeg.so)
+        "${PYTHON}" "$(dirname "${BASH_SOURCE[0]}")/untextrel_camera.py" "${2}"
+        ;;
+    vendor/bin/mm-qcamera-daemon|vendor/lib/libmmcamera_interface.so)
+        "${PYTHON}" "$(dirname "${BASH_SOURCE[0]}")/retarget_camera_socket.py" "${2}"
+        ;;
+    vendor/lib/libtuning_aec_ov2722_subcam_zsl.so)
+        "${PYTHON}" "$(dirname "${BASH_SOURCE[0]}")/cap_subcam_aec_curve.py" "${2}"
         ;;
     esac
 }

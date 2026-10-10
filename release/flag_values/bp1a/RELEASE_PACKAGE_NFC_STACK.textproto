@@ -1,0 +1,8 @@
+# The PN544 speaks ETSI HCI only, which the NCI stack in
+# com.android.nfcservices cannot drive. NfcNci makes base_system.mk install
+# NfcNci and framework-nfc on the platform bootclasspath; the Nfc app
+# (packages/apps/Nfc nxp DeviceHost) overrides NfcNci.
+name: "RELEASE_PACKAGE_NFC_STACK"
+value: {
+  string_value: "NfcNci"
+}

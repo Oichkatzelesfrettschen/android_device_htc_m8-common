@@ -127,4 +127,8 @@
          Refer to power.h for details.
     -->
     <bool name="config_powerDecoupleInteractiveModeFromDisplay">true</bool>
+
+    <!-- The device can carry VoLTE through the PhhIms ImsService; whether a
+         subscription uses it is the carrier config's carrier_volte_available_bool. -->
+    <bool name="config_device_volte_available">true</bool>
 </resources>

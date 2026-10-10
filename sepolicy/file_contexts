@@ -1,0 +1,1 @@
+/sys/devices/f9925000\.i2c/i2c-1/1-[0-9a-f]+/leds/torch_0(/.*)?    u:object_r:sysfs_flashlight:s0

@@ -1,0 +1,27 @@
+//
+// SPDX-License-Identifier: MIT
+//
+// soffinate: HTC M8 S-OFF probe + attempt tool. Three pathways
+// (dmagent EPST_ON, misc:0x101C, pg1fs:0x8400) under one entry point;
+// the probe reads the current security_level, pg1fs/security block, and
+// misc flag; -p all runs each write and reports which bytes persisted.
+//
+// On HBOOT 3.19.0.0000 SHIP, pg1fs is TrustZone-write-protected and
+// misc:0x101C is unused; EPST_ON only chmods the EPST symlinks. The
+// tool reports the measured outcome rather than claiming a result.
+//
+
+cc_binary {
+    name: "soffinate",
+    srcs: ["soffinate.c"],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Wno-unused-const-variable",
+    ],
+    shared_libs: [
+        "libdl",
+    ],
+    init_rc: ["soffinate.rc"],
+    vendor: true,
+}

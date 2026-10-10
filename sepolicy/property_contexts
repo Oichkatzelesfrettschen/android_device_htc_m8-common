@@ -1,0 +1,3 @@
+# QCameraParameters::setPreviewFpsRange(int, int) in camera.vendor.msm8974.so
+# pins every preview fps range to this value when it is nonzero.
+persist.debug.set.fixedfps          u:object_r:vendor_camera_fixed_fps_prop:s0 exact

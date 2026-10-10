@@ -22,6 +22,5 @@ LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_SHARED_LIBRARIES := libhardware
 # LOCAL_C_INCLUDES:= hardware/libhardware/include
 LOCAL_MODULE_TAGS := optional
-LOCAL_PROPRIETARY_MODULE := true
 
 include $(BUILD_SHARED_LIBRARY)

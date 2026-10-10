@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: MIT
+#
+# EPST directory setup for dmagent's :DMD:CONFIG:EPST_ON precondition.
+# dmagent chmods http_proxy and rtsp_proxy under
+# /data/data/com.google.android.epst; without the directory and the
+# uevent_helper symlink, chmod fails and dmagent returns NOK. This
+# init stanza prepares both before dmagent starts so EPST_ON can
+# reach OK (the chmod completes). The EPST_ON path is not an S-OFF
+# write on HBOOT 3.19 but completes the dmagent protocol correctly
+# for the carrier-side DM flow.
+#
+
+on post-fs-data
+    mkdir /data/data/com.google.android.epst 0777 root root
+    chmod 0777 /data/data/com.google.android.epst
+    exec u:r:init:s0 root root -- /system/bin/toybox ln -sf /sys/kernel/uevent_helper /data/data/com.google.android.epst/http_proxy
+    exec u:r:init:s0 root root -- /system/bin/toybox touch /data/data/com.google.android.epst/rtsp_proxy
+    chmod 0666 /data/data/com.google.android.epst/rtsp_proxy
+
+service soffinate_probe /vendor/bin/soffinate -r
+    class late_start
+    user root
+    group root
+    oneshot
+    disabled
+
+on property:persist.m8.soffinate.probe=1
+    start soffinate_probe

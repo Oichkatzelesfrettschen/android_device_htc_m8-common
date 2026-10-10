@@ -16,6 +16,10 @@
 #
 
 $(call inherit-product, $(SRC_TARGET_DIR)/product/product_launched_with_k.mk)
+
+# Release config: RELEASE_PACKAGE_NFC_STACK=NfcNci for products inheriting this
+# file, so the platform NFC stack replaces com.android.nfcservices.
+PRODUCT_RELEASE_CONFIG_MAPS += device/htc/m8-common/release/release_config_map.textproto
 $(call inherit-product, vendor/htc/m8-common/m8-common-vendor.mk)
 
 # Inherit from msm8974-common
@@ -50,28 +54,54 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     init.target.rc
 
+# IMS: PhhIms is a userspace SIP/IMS MmTel service, because the legacy
+# Qualcomm RIL carries no IMS. It needs SIM AKA over SIM_AUTHENTICATION and an
+# ims APN data call from the RIL, and IPsec transport mode from the kernel.
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.hardware.telephony.ims.xml:system/vendor/etc/permissions/android.hardware.telephony.ims.xml
+
+PRODUCT_PACKAGES += \
+    PhhIms
+
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configs/privapp-permissions-me.phh.ims.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/permissions/privapp-permissions-me.phh.ims.xml
+
 # IRDA
 PRODUCT_PACKAGES += \
-    android.hardware.ir@1.0-impl
+    android.hardware.ir@1.0-impl \
+    android.hardware.ir@1.0-service
 
 PRODUCT_BOOT_JARS += \
     htcirlibs
 
-# NFC
+# NFC: NXP PN544 over ETSI HCI. The Nfc app (nxp DeviceHost) loads libnfc_jni,
+# which drives libnfc and opens /dev/pn544 through the nfc.msm8974 hw_module_t.
 PRODUCT_PACKAGES += \
-    android.hardware.nfc@1.0-impl \
     com.android.nfc_extras \
-    nfc.msm8974 \
     libnfc \
-    libnfc_ndef \
     libnfc_jni \
+    libnfc_ndef \
     Nfc \
+    nfc.msm8974 \
     Tag
 
-ifeq ($(TARGET_BUILD_VARIANT),user)
-    NFCEE_ACCESS_PATH := $(LOCAL_PATH)/configs/nfcee_access.xml
-else
-    NFCEE_ACCESS_PATH := $(LOCAL_PATH)/configs/nfcee_access_debug.xml
-endif
-PRODUCT_COPY_FILES += \
-    $(NFCEE_ACCESS_PATH):system/etc/nfcee_access.xml
+# Compatibility paths resolve to vendor-owned configuration.
+PRODUCT_PACKAGES += \
+    htc_m8_config_link_bluetooth_cal_acdb \
+    htc_m8_config_link_bluetooth_cal_recovery_acdb \
+    htc_m8_config_link_general_cal_acdb \
+    htc_m8_config_link_global_cal_acdb \
+    htc_m8_config_link_handset_cal_acdb \
+    htc_m8_config_link_hdmi_cal_acdb \
+    htc_m8_config_link_headset_cal_acdb \
+    htc_m8_config_link_speaker_cal_acdb \
+    htc_m8_config_link_cir_img \
+    htc_m8_config_link_tfa
+
+PRODUCT_PACKAGES += htc_m8_firmware_directory_link
+
+# soffinate: MIT-licensed HTC M8 S-OFF probe + attempt tool. The probe
+# reads security_level, pg1fs/security and misc:0x101C; the attempt
+# pathways run dmagent EPST_ON, misc write and pg1fs write. See
+# soffinate/README.md for the HBOOT 3.19 outcome of each pathway.
+PRODUCT_PACKAGES += soffinate
