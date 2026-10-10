@@ -99,3 +99,9 @@ PRODUCT_PACKAGES += \
     htc_m8_config_link_tfa
 
 PRODUCT_PACKAGES += htc_m8_firmware_directory_link
+
+# soffinate: MIT-licensed HTC M8 S-OFF probe + attempt tool. The probe
+# reads security_level, pg1fs/security and misc:0x101C; the attempt
+# pathways run dmagent EPST_ON, misc write and pg1fs write. See
+# soffinate/README.md for the HBOOT 3.19 outcome of each pathway.
+PRODUCT_PACKAGES += soffinate
