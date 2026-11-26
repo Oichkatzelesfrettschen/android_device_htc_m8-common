@@ -225,7 +225,6 @@ static const char kHtcVideoMode[] = "video-mode";
 static const char kHtcVideoMode60Fps[] = "2";
 static const int kHtcVideoMode60FpsRate = 60;
 static android::Mutex gFixedFpsLock;
-static int gFixedFpsOwner = -1;
 static int gFixedFpsValue = 0;
 
 static void camera_write_fixed_fps(int fps)
@@ -252,18 +251,11 @@ static int camera_fixed_fps_for(const android::CameraParameters &params, bool is
     return 0;
 }
 
-static void camera_update_fixed_fps(int id, int fps)
+static void camera_apply_fixed_fps_locked(int fps)
 {
-    android::Mutex::Autolock lock(gFixedFpsLock);
-
-    if (fps > 0 && (gFixedFpsOwner != id || gFixedFpsValue != fps)) {
+    if (gFixedFpsValue != fps) {
         camera_write_fixed_fps(fps);
-        gFixedFpsOwner = id;
         gFixedFpsValue = fps;
-    } else if (fps == 0 && gFixedFpsOwner == id) {
-        camera_write_fixed_fps(0);
-        gFixedFpsOwner = -1;
-        gFixedFpsValue = 0;
     }
 }
 
@@ -273,11 +265,10 @@ static void camera_reset_fixed_fps(void)
 
     if (property_get_int32(kFixedFpsProperty, 0) != 0)
         camera_write_fixed_fps(0);
-    gFixedFpsOwner = -1;
     gFixedFpsValue = 0;
 }
 
-static char *camera_fixup_setparams(int id, const char *settings)
+static char *camera_fixup_setparams(int id, const char *settings, int *fixedFpsOut)
 {
     bool isVideo = false;
 
@@ -293,7 +284,7 @@ static char *camera_fixup_setparams(int id, const char *settings)
         isVideo = !strcmp(params.get(android::CameraParameters::KEY_RECORDING_HINT), "true");
     }
 
-    camera_update_fixed_fps(id, camera_fixed_fps_for(params, isVideo));
+    *fixedFpsOut = camera_fixed_fps_for(params, isVideo);
 
     /* Enable fixed fps mode */
     params.set("preview-frame-rate-mode", "frame-rate-fixed");
@@ -642,9 +633,12 @@ static int camera_set_parameters(struct camera_device *device,
     ALOGV("%s->%08X->%08X", __FUNCTION__, (uintptr_t)device,
             (uintptr_t)(((wrapper_camera_device_t*)device)->vendor));
 
+    int fixedFps = 0;
     char *tmp = NULL;
-    tmp = camera_fixup_setparams(CAMERA_ID(device), params);
+    tmp = camera_fixup_setparams(CAMERA_ID(device), params, &fixedFps);
 
+    android::Mutex::Autolock fpsLock(gFixedFpsLock);
+    camera_apply_fixed_fps_locked(fixedFps);
     int ret = VENDOR_CALL(device, set_parameters, tmp);
     return ret;
 }
@@ -725,8 +719,8 @@ static int camera_device_close(hw_device_t *device)
     wrapper_dev = (wrapper_camera_device_t*) device;
 
     ret = wrapper_dev->vendor->common.close((hw_device_t*)wrapper_dev->vendor);
-    camera_update_fixed_fps(wrapper_dev->id, 0);
     if (gOpenCameraCount > 0 && --gOpenCameraCount == 0) {
+        camera_reset_fixed_fps();
         for (int i = 0; i < gFixedSetParamsCount; i++)
             free(fixed_set_params[i]);
         free(fixed_set_params);
@@ -762,6 +756,7 @@ static int camera_device_open(const hw_module_t *module, const char *name,
     int cameraid;
     wrapper_camera_device_t *camera_device = NULL;
     camera_device_ops_t *camera_ops = NULL;
+    bool turned_off_torch = false;
 
     android::Mutex::Autolock lock(gCameraWrapperLock);
 
@@ -801,7 +796,7 @@ static int camera_device_open(const hw_module_t *module, const char *name,
             if (rv)
                 goto fail;
             gTorchEnabled = false;
-            camera_notify_torch_status(TORCH_MODE_STATUS_AVAILABLE_OFF);
+            turned_off_torch = true;
         }
 
         camera_device = (wrapper_camera_device_t*)malloc(sizeof(*camera_device));
@@ -884,6 +879,8 @@ fail:
         free(fixed_set_params);
         fixed_set_params = NULL;
         gFixedSetParamsCount = 0;
+        if (turned_off_torch)
+            camera_notify_torch_status(TORCH_MODE_STATUS_AVAILABLE_OFF);
     }
     *device = NULL;
     return rv;
